@@ -11,6 +11,9 @@ from gplugins.lumerical.write_charge_distribution_lumerical import (
 from gplugins.lumerical.write_sparameters_lumerical_components import (
     write_sparameters_lumerical_components,
 )
+from gplugins.lumerical.Lumerical import (
+    Lumerical
+)
 
 __all__ = [
     "read_sparameters_lumerical",
@@ -18,4 +21,5 @@ __all__ = [
     "write_charge_distribution_lumerical",
     "write_sparameters_lumerical_components",
     "run_wavelength_sweep",
+    "Lumerical",
 ]
