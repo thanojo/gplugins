@@ -19,6 +19,7 @@ from gdsfactory.technology import LayerStack
 from gplugins.common.utils.get_sparameters_path import (
     get_sparameters_path_lumerical as get_sparameters_path,
 )
+from gplugins.lumerical.utils import to_lbr
 
 if TYPE_CHECKING:
     from gdsfactory.typings import ComponentSpec, MaterialSpec, PathType
@@ -324,23 +325,10 @@ def write_sparameters_lumerical(
     s.newproject()
     s.selectall()
     s.deleteall()
-    s.addrect(
-        x_min=x_min,
-        x_max=x_max,
-        y_min=y_min,
-        y_max=y_max,
-        z=z,
-        z_span=z_span,
-        index=1.5,
-        name="clad",
-    )
 
     material_name_to_lumerical_new = material_name_to_lumerical or {}
     material_name_to_lumerical = ss.material_name_to_lumerical.copy()
     material_name_to_lumerical.update(**material_name_to_lumerical_new)
-
-    material = material_name_to_lumerical[ss.background_material]
-    set_material(session=s, structure="clad", material=material)
 
     s.addfdtd(
         dimension="3D",
@@ -355,35 +343,15 @@ def write_sparameters_lumerical(
         simulation_time=ss.simulation_time,
         simulation_temperature=ss.simulation_temperature,
     )
-    component_layers = component_with_booleans.get_layers()
 
-    for layer, thickness in layer_to_thickness.items():
-        if layer not in component_layers:
-            continue
-
-        if layer not in layer_to_material:
-            raise ValueError(f"{layer} not in {layer_to_material.keys()}")
-
-        material_name = layer_to_material[layer]
-        if material_name not in material_name_to_lumerical:
-            raise ValueError(
-                f"{material_name!r} not in {list(material_name_to_lumerical.keys())}"
-            )
-        material = material_name_to_lumerical[material_name]
-
-        if layer not in layer_to_zmin:
-            raise ValueError(f"{layer} not in {list(layer_to_zmin.keys())}")
-
-        zmin = layer_to_zmin[layer]
-        zmax = zmin + thickness
-        z = (zmax + zmin) / 2
-
-        s.gdsimport(str(gdspath), "top", f"{layer[0]}:{layer[1]}")
-        layername = f"GDS_LAYER_{layer[0]}:{layer[1]}"
-        s.setnamed(layername, "z", z * 1e-6)
-        s.setnamed(layername, "z span", thickness * 1e-6)
-        set_material(session=s, structure=layername, material=material)
-        logger.info(f"adding {layer}, thickness = {thickness} um, zmin = {zmin} um ")
+    ### Create Layer Builder object and insert geometry
+    process_file_path = to_lbr(material_name_to_lumerical, layer_stack, dirpath)
+    s.addlayerbuilder()
+    s.set("x", 0)
+    s.set("y", 0)
+    s.set("z", 0)
+    s.loadgdsfile(str(gdspath))
+    s.loadprocessfile(str(process_file_path))
 
     for i, port in enumerate(ports):
         zmin = layer_to_zmin[port.layer]
@@ -550,12 +518,23 @@ if __name__ == "__main__":
     # component = gf.components.straight(length=2.5)
     component = gf.components.mmi1x2()
 
-    material_name_to_lumerical = dict(si=(3.45, 2))  # or dict(si=3.45+2j)
+    material_name_to_lumerical = dict(
+        si="Si (Silicon) - Palik",
+        substrate="Si (Silicon) - Palik",
+        box="SiO2 (Glass) - Palik",
+        clad="SiO2 (Glass) - Palik",
+    )  # or dict(si=3.45+2j)
+
+    layerstack = get_layer_stack()
+    layerstack["clad"].layer_type = "background"
+    layerstack["box"].layer_type = "background"
+    layerstack["substrate"].layer_type = "background"
     r = write_sparameters_lumerical(
         component=component,
         material_name_to_lumerical=material_name_to_lumerical,
         run=False,
         session=s,
+        layer_stack=layerstack,
     )
     # c = gf.components.coupler_ring(length_x=3)
     # c = gf.components.mmi1x2()

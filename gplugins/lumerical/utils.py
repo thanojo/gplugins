@@ -67,7 +67,6 @@ def to_lbr(
         layer.set("start_position", f'{layer_info["zmin"] * um}')
         layer.set("thickness", f'{layer_info["thickness"] * um}')
         layer.set("start_position", f'{layer_info["zmin"] * um}')
-        layer.set("pattern_material", f'{material_map.get(layer_info["material"], "")}')
         layer.set("process", f"{process}")
         layer.set("sidewall_angle", f'{90-layer_info["sidewall_angle"]}')
         if layer_info["bias"]:
@@ -75,11 +74,23 @@ def to_lbr(
         else:
             layer.set("pattern_growth_delta", "0")
 
+        if process == "Grow":
+            layer.set(
+                "pattern_material", f'{material_map.get(layer_info["material"], "")}'
+            )
+        elif process == "Background":
+            layer.set("material", f'{material_map.get(layer_info["material"], "")}')
+
     # Prettify XML
     rough_string = ET.tostring(layer_builder, "utf-8")
     reparsed = minidom.parseString(rough_string)
     xml_str = reparsed.toprettyxml(indent="  ")
 
-    process_file_path = Path(dirpath) / "process.lbr"
-    with open(process_file_path, "w") as f:
+    if dirpath:
+        process_file_path = Path(str(dirpath)) / "process.lbr"
+    else:
+        process_file_path = Path(__file__).resolve().parent / "process.lbr"
+    with open(str(process_file_path), "w") as f:
         f.write(xml_str)
+
+    return process_file_path
