@@ -14,7 +14,7 @@ from gdsfactory.generic_tech.simulation_settings import (
     SimulationSettingsLumericalFdtd,
 )
 from gdsfactory.pdk import get_layer_stack
-from gdsfactory.technology import LayerStack
+from gdsfactory.technology import LayerStack, LayerLevel
 
 from gplugins.common.utils.get_sparameters_path import (
     get_sparameters_path_lumerical as get_sparameters_path,
@@ -525,10 +525,107 @@ if __name__ == "__main__":
         clad="SiO2 (Glass) - Palik",
     )  # or dict(si=3.45+2j)
 
-    layerstack = get_layer_stack()
-    layerstack["clad"].layer_type = "background"
-    layerstack["box"].layer_type = "background"
-    layerstack["substrate"].layer_type = "background"
+    # Create layerstack
+    layerstack = LayerStack(
+        layers={
+            "clad": LayerLevel(
+                name=None,
+                layer=(99999, 0),
+                thickness=3.0,
+                thickness_tolerance=None,
+                zmin=0.0,
+                zmin_tolerance=None,
+                material="sio2",
+                sidewall_angle=0.0,
+                sidewall_angle_tolerance=None,
+                width_to_z=0.0,
+                z_to_bias=None,
+                mesh_order=9,
+                layer_type="background",
+                mode=None,
+                into=None,
+                resistivity=None,
+                bias=None,
+                derived_layer=None,
+                info={},
+                background_doping_concentration=None,
+                background_doping_ion=None,
+                orientation="100",
+            ),
+            "box": LayerLevel(
+                name=None,
+                layer=(99999, 0),
+                thickness=3.0,
+                thickness_tolerance=None,
+                zmin=-3.0,
+                zmin_tolerance=None,
+                material="sio2",
+                sidewall_angle=0.0,
+                sidewall_angle_tolerance=None,
+                width_to_z=0.0,
+                z_to_bias=None,
+                mesh_order=9,
+                layer_type="background",
+                mode=None,
+                into=None,
+                resistivity=None,
+                bias=None,
+                derived_layer=None,
+                info={},
+                background_doping_concentration=None,
+                background_doping_ion=None,
+                orientation="100",
+            ),
+            "core": LayerLevel(
+                name=None,
+                layer=(1, 0),
+                thickness=0.22,
+                thickness_tolerance=None,
+                zmin=0.0,
+                zmin_tolerance=None,
+                material="si",
+                sidewall_angle=10.0,
+                sidewall_angle_tolerance=None,
+                width_to_z=0.5,
+                z_to_bias=None,
+                mesh_order=2,
+                layer_type="grow",
+                mode=None,
+                into=None,
+                resistivity=None,
+                bias=None,
+                derived_layer=None,
+                info={"active": True},
+                background_doping_concentration=None,
+                background_doping_ion=None,
+                orientation="100",
+            ),
+            "substrate": LayerLevel(
+                name=None,
+                layer=(99999, 0),
+                thickness=10.0,
+                thickness_tolerance=None,
+                zmin=-13.0,
+                zmin_tolerance=None,
+                material="si",
+                sidewall_angle=0.0,
+                sidewall_angle_tolerance=None,
+                width_to_z=0.0,
+                z_to_bias=None,
+                mesh_order=101,
+                layer_type="background",
+                mode=None,
+                into=None,
+                resistivity=None,
+                bias=None,
+                derived_layer=None,
+                info={},
+                background_doping_concentration=None,
+                background_doping_ion=None,
+                orientation="100",
+            ),
+        }
+    )
     r = write_sparameters_lumerical(
         component=component,
         material_name_to_lumerical=material_name_to_lumerical,
