@@ -32,14 +32,6 @@ class ConstituentRecipes:
         self.constituent_recipes = recipes
         self.lock = threading.Lock()
 
-    # TODO figure out some way to make the `self.constituent_recipes` hash order-agnostic (or just order it by something arbitrary but consistent). 
-    # not a huge issue since people likely won't change it and we probably have other problems if we want to compare two indep ConstituentRecipes
-    def __hash__(self) -> int:
-        h = hashlib.sha1()
-        for recipe in self.constituent_recipes:
-            h.update(str(hash(recipe)).encode('utf-8'))
-        return int.from_bytes(h.digest(), 'big')
-
     def __iter__(self):
         """
         Return an iterable of DesignRecipes, to be evaluated.

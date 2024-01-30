@@ -17,7 +17,6 @@ from lumapi import Lumerical
 
 class FdtdDesignRecipe(DesignRecipe):
     sim_settings: SimulationSettingsLumericalFdtd
-    layer_stack: LayerStack
     session: Lumerical
 
     # The s-parameters for the optical ports of `self.component`
@@ -42,7 +41,6 @@ class FdtdDesignRecipe(DesignRecipe):
         h = hashlib.sha1()
         h.update(str(super().__hash__()).encode('utf-8'))
         h.update(str(self.sim_settings).encode('utf-8'))
-        h.update(str(self.sp).encode('utf-8'))
         return int.from_bytes(h.digest(), 'big')
 
     def eval(self, force_rerun_all=False) -> bool:
@@ -64,5 +62,9 @@ class FdtdDesignRecipe(DesignRecipe):
                   self.layer_stack,
                   Engine.FDTD)
             logger.warning("TODO actually evaluate FDTD")
+
+# TODO find some way to automatically hook into eval()
+# and do this at the end? can maybe use decorators?
+            self.last_hash = hash(self)
 
         return success
