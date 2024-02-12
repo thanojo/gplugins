@@ -1,6 +1,7 @@
 from gplugins.lumerical.utils import to_lbr
 from gdsfactory.technology.layer_stack import LayerStack, LayerLevel
 from gdsfactory.config import logger
+from gplugins.lumerical.config import DEBUG_LUMERICAL
 
 
 def test_to_lbr():
@@ -216,7 +217,7 @@ def test_to_lbr():
     success = False
     message = ""
     try:
-        mode = lumapi.MODE(hide=False)
+        mode = lumapi.MODE(hide=not DEBUG_LUMERICAL)
         mode.addlayerbuilder()
         mode.loadprocessfile(str(process_file_lumerical2021))
         success = success or True
@@ -230,7 +231,7 @@ def test_to_lbr():
     process_file_lumerical2023 = to_lbr(layer_map, layerstack=layerstack_lumerical2023)
 
     try:
-        mode = lumapi.MODE(hide=False)
+        mode = lumapi.MODE(hide=not DEBUG_LUMERICAL)
         mode.addlayerbuilder()
         mode.loadprocessfile(str(process_file_lumerical2023))
         success = success or True
