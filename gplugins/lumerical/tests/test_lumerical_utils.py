@@ -1,5 +1,6 @@
 from gplugins.lumerical.utils import to_lbr
 from gdsfactory.technology.layer_stack import LayerStack, LayerLevel
+from gdsfactory.config import logger
 
 
 def test_to_lbr():
@@ -245,5 +246,5 @@ def test_to_lbr():
             + "\nThis is used to capture Lumerical versions 2021 that only work with passive only process files "
             + "and subsequent versions of Lumerical that support both passives and dopants."
         )
-    print(message)
+    logger.info(message)
     assert success, message
