@@ -24,7 +24,7 @@ def layerstack_to_lbr(
         dirpath: Directory to save process file (process.lbr)
 
     Returns:
-        None
+        Process file path
 
     Notes:
         This function generates an XML file representing a Layer Builder file for Lumerical, based on the provided the active PDK
