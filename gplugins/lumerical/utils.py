@@ -10,7 +10,7 @@ from pathlib import Path
 um = 1e-6
 
 
-def to_lbr(
+def layerstack_to_lbr(
     material_map: dict[str, str],
     layerstack: LayerStack | None = None,
     dirpath: PathType | None = "",

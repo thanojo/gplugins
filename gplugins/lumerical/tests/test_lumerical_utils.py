@@ -1,10 +1,10 @@
-from gplugins.lumerical.utils import to_lbr
+from gplugins.lumerical.utils import layerstack_to_lbr
 from gdsfactory.technology.layer_stack import LayerStack, LayerLevel
 from gdsfactory.config import logger
 from gplugins.lumerical.config import DEBUG_LUMERICAL
 
 
-def test_to_lbr():
+def test_layerstack_to_lbr():
     # Inputs
     layer_map = {
         "si": "Si (Silicon) - Palik",
@@ -204,7 +204,9 @@ def test_to_lbr():
     )
 
     # Create LBR process file
-    process_file_lumerical2021 = to_lbr(layer_map, layerstack=layerstack_lumerical2021)
+    process_file_lumerical2021 = layerstack_to_lbr(
+        layer_map, layerstack=layerstack_lumerical2021
+    )
 
     # Check process file in Lumerical MODE
     try:
@@ -228,7 +230,9 @@ def test_to_lbr():
     mode.close()
 
     # Create LBR process file
-    process_file_lumerical2023 = to_lbr(layer_map, layerstack=layerstack_lumerical2023)
+    process_file_lumerical2023 = layerstack_to_lbr(
+        layer_map, layerstack=layerstack_lumerical2023
+    )
 
     try:
         mode = lumapi.MODE(hide=not DEBUG_LUMERICAL)
