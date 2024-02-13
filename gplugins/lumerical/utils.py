@@ -59,27 +59,27 @@ def layerstack_to_lbr(
             layer = SubElement(layers, "layer")
 
             # Default params
-            layer.set("enabled", "1")
-            layer.set("pattern_alpha", "0.8")
-            layer.set("start_position_auto", "0")
-            layer.set("background_alpha", "0.3")
-            layer.set("pattern_material_index", "0")
-            layer.set("material_index", "0")
+            layer_params = {
+                "enabled": "1",
+                "pattern_alpha": "0.8",
+                "start_position_auto": "0",
+                "background_alpha": "0.3",
+                "pattern_material_index": "0",
+                "material_index": "0",
+                "name": layer_name,
+                "layer_name": f'{layer_info["layer"][0]}:{layer_info["layer"][1]}',
+                "start_position": f'{layer_info["zmin"] * um}',
+                "thickness": f'{layer_info["thickness"] * um}',
+                "start_position": f'{layer_info["zmin"] * um}',
+                "process": f"{process}",
+                "sidewall_angle": f'{90 - layer_info["sidewall_angle"]}',
+                "pattern_growth_delta": f"{layer_info['bias'] * um}"
+                if layer_info["bias"]
+                else "0",
+            }
 
-            # Layer specific params
-            layer.set("name", layer_name)
-            layer.set(
-                "layer_name", f'{layer_info["layer"][0]}:{layer_info["layer"][1]}'
-            )
-            layer.set("start_position", f'{layer_info["zmin"] * um}')
-            layer.set("thickness", f'{layer_info["thickness"] * um}')
-            layer.set("start_position", f'{layer_info["zmin"] * um}')
-            layer.set("process", f"{process}")
-            layer.set("sidewall_angle", f'{90-layer_info["sidewall_angle"]}')
-            if layer_info["bias"]:
-                layer.set("pattern_growth_delta", f"{layer_info['bias'] * um}")
-            else:
-                layer.set("pattern_growth_delta", "0")
+            for param, val in layer_params.items():
+                layer.set(param, val)
 
             if process == "Grow":
                 layer.set(
@@ -104,14 +104,25 @@ def layerstack_to_lbr(
                 "background_doping_concentration", False
             ) and layer_info.get("background_doping_ion", False):
                 doping_layer = SubElement(doping_layers, "layer")
+                doping_params = {
+                    "z_surface_positions": f'{layer_info["zmin"] * um}',
+                    "distribution_function": "Gaussian",
+                    "phi": "0",
+                    "lateral_scatter": "2e-08",
+                    "range": f"{layer_info['thickness'] * um}",
+                    "theta": "0",
+                    "mask_layer_number": f'{layer_info["layer"][0]}:{layer_info["layer"][1]}',
+                    "kurtosis": "0",
+                    "process": f"{process}",
+                    "skewness": "0",
+                    "straggle": "4.9999999999999998e-08",
+                    "concentration": f"{layer_info['background_doping_concentration']}",
+                    "enabled": "1",
+                    "name": f"{layer_name}_doping",
+                }
+                for param, val in doping_params.items():
+                    doping_layer.set(param, val)
 
-                # Order of param matters
-                doping_layer.set("z_surface_positions", f'{layer_info["zmin"] * um}')
-                doping_layer.set("distribution_function", "Gaussian")
-                doping_layer.set("phi", "0")
-                doping_layer.set("lateral_scatter", "2e-08")
-                doping_layer.set("range", f"{layer_info['thickness'] * um}")
-                doping_layer.set("theta", "0")
                 if (
                     layer_info["background_doping_ion"] == "n"
                     or layer_info["background_doping_ion"] == "p"
@@ -121,19 +132,6 @@ def layerstack_to_lbr(
                     raise ValueError(
                         f'Dopant must be "p" or "n". Got {layer_info["background_doping_ion"]}.'
                     )
-                doping_layer.set(
-                    "mask_layer_number",
-                    f'{layer_info["layer"][0]}:{layer_info["layer"][1]}',
-                )
-                doping_layer.set("kurtosis", "0")
-                doping_layer.set("process", f"{process}")
-                doping_layer.set("skewness", "0")
-                doping_layer.set("straggle", "4.9999999999999998e-08")
-                doping_layer.set(
-                    "concentration", f"{layer_info['background_doping_concentration']}"
-                )
-                doping_layer.set("enabled", "1")
-                doping_layer.set("name", f"{layer_name}_doping")
 
     # If no doping layers exist, delete element
     if len(doping_layers) == 0:

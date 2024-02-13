@@ -19,7 +19,7 @@ from gdsfactory.technology import LayerStack, LayerLevel
 from gplugins.common.utils.get_sparameters_path import (
     get_sparameters_path_lumerical as get_sparameters_path,
 )
-from gplugins.lumerical.utils import to_lbr
+from gplugins.lumerical.utils import layerstack_to_lbr
 
 if TYPE_CHECKING:
     from gdsfactory.typings import ComponentSpec, MaterialSpec, PathType
