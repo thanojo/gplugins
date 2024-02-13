@@ -14,7 +14,7 @@ um = 1e-6
 def layerstack_to_lbr(
     material_map: dict[str, str],
     layerstack: LayerStack | None = None,
-    dirpath: PathType | None = ""
+    dirpath: PathType | None = "",
 ) -> None:
     """
     Generate an XML file representing a Lumerical Layer Builder process file based on provided material map.
