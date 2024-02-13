@@ -2,6 +2,7 @@ from gdsfactory.technology import LayerStack
 from gdsfactory.typings import PathType
 from gdsfactory.pdk import get_layer_stack
 from gdsfactory.config import logger
+from gplugins.lumerical.config import ENABLE_DOPING
 from xml.etree.ElementTree import Element, SubElement
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
@@ -13,8 +14,7 @@ um = 1e-6
 def layerstack_to_lbr(
     material_map: dict[str, str],
     layerstack: LayerStack | None = None,
-    dirpath: PathType | None = "",
-    enable_doping: bool = True,
+    dirpath: PathType | None = ""
 ) -> None:
     """
     Generate an XML file representing a Lumerical Layer Builder process file based on provided material map.
@@ -23,7 +23,6 @@ def layerstack_to_lbr(
         material_map: A dictionary mapping materials used in the layer stack to Lumerical materials.
         layerstack: Layer stack that has info on layer names, layer numbers, thicknesses, etc.
         dirpath: Directory to save process file (process.lbr)
-        enable_doping: If True, enable doping layers to be generated. 2021 Lumerical versions do not support doping layers. Therefore, disable this if using Lumerical versions 2021 or prior.
 
     Returns:
         Process file path
@@ -43,7 +42,6 @@ def layerstack_to_lbr(
     layers = SubElement(layer_builder, "layers")
     doping_layers = SubElement(layer_builder, "doping_layers")
     for layer_name, layer_info in layerstack.to_dict().items():
-        ### Set optical and metal layers
         if layer_info["layer_type"] == "grow":
             process = "Grow"
         elif layer_info["layer_type"] == "background":
@@ -56,6 +54,7 @@ def layerstack_to_lbr(
             )
             process = "Grow"
 
+        ### Set optical and metal layers
         if process == "Grow" or process == "Background":
             layer = SubElement(layers, "layer")
 
@@ -90,7 +89,7 @@ def layerstack_to_lbr(
             elif process == "Background":
                 layer.set("material", f'{material_map.get(layer_info["material"], "")}')
 
-        if (process == "Implant" or process == "Background") and enable_doping:
+        if (process == "Implant" or process == "Background") and ENABLE_DOPING:
             ### Set doping layers
             # KNOWN ISSUE: If a metal or optical layer has the same name as a doping layer, Layer Builder will not compile
             # the process file correctly and the doping layer will not appear. Therefore, doping layer names MUST be unique.

@@ -1,7 +1,7 @@
 from gplugins.lumerical.utils import layerstack_to_lbr
 from gdsfactory.technology.layer_stack import LayerStack, LayerLevel
 from gdsfactory.config import logger
-from gplugins.lumerical.config import DEBUG_LUMERICAL
+from gplugins.lumerical.config import DEBUG_LUMERICAL, ENABLE_DOPING
 
 
 def test_layerstack_to_lbr():
@@ -229,21 +229,22 @@ def test_layerstack_to_lbr():
         message += f"\n{err}\nWARNING: Passives only process file unsucessfully loaded."
     mode.close()
 
-    # Create LBR process file
-    process_file_lumerical2023 = layerstack_to_lbr(
-        layer_map, layerstack=layerstack_lumerical2023
-    )
+    if ENABLE_DOPING:
+        # Create LBR process file
+        process_file_lumerical2023 = layerstack_to_lbr(
+            layer_map, layerstack=layerstack_lumerical2023
+        )
 
-    try:
-        mode = lumapi.MODE(hide=not DEBUG_LUMERICAL)
-        mode.addlayerbuilder()
-        mode.loadprocessfile(str(process_file_lumerical2023))
-        success = success or True
-        message += "\nSUCCESS: Passives and dopants process file successfully loaded."
-    except Exception as err:
-        success = success or False
-        message += f"\nWARNING: {err}\nPassives and dopants process file unsucessfully loaded. Lumerical 2021 version does not support dopants."
-    mode.close()
+        try:
+            mode = lumapi.MODE(hide=not DEBUG_LUMERICAL)
+            mode.addlayerbuilder()
+            mode.loadprocessfile(str(process_file_lumerical2023))
+            success = success or True
+            message += "\nSUCCESS: Passives and dopants process file successfully loaded."
+        except Exception as err:
+            success = success or False
+            message += f"\nWARNING: {err}\nPassives and dopants process file unsucessfully loaded. Lumerical 2021 version does not support dopants."
+        mode.close()
 
     if success:
         message += (
