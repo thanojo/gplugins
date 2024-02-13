@@ -5,9 +5,9 @@ from gplugins.lumerical.config import DEBUG_LUMERICAL, ENABLE_DOPING
 
 
 def test_layerstack_to_lbr():
-    '''
+    """
     Ensure process file generated from function is importable in MODE, FDTD, and CHARGE.
-    '''
+    """
     # Inputs
     layer_map = {
         "si": "Si (Silicon) - Palik",
