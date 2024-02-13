@@ -14,6 +14,7 @@ def layerstack_to_lbr(
     material_map: dict[str, str],
     layerstack: LayerStack | None = None,
     dirpath: PathType | None = "",
+    enable_doping: bool = True,
 ) -> None:
     """
     Generate an XML file representing a Lumerical Layer Builder process file based on provided material map.
@@ -22,6 +23,7 @@ def layerstack_to_lbr(
         material_map: A dictionary mapping materials used in the layer stack to Lumerical materials.
         layerstack: Layer stack that has info on layer names, layer numbers, thicknesses, etc.
         dirpath: Directory to save process file (process.lbr)
+        enable_doping: If True, enable doping layers to be generated. 2021 Lumerical versions do not support doping layers. Therefore, disable this if using Lumerical versions 2021 or prior.
 
     Returns:
         Process file path
@@ -29,8 +31,7 @@ def layerstack_to_lbr(
     Notes:
         This function generates an XML file representing a Layer Builder file for Lumerical, based on the provided the active PDK
         and material map. It creates 'process.lbr' in the current working directory, containing layer information like name,
-        material, thickness, sidewall angle, and other properties specified in the layer stack. It skips layers that are not
-        of type 'grow' or 'background' and logs a warning for each skipped layer.
+        material, thickness, sidewall angle, and other properties specified in the layer stack.
     """
     layerstack = layerstack or get_layer_stack()
 
@@ -89,7 +90,7 @@ def layerstack_to_lbr(
             elif process == "Background":
                 layer.set("material", f'{material_map.get(layer_info["material"], "")}')
 
-        if process == "Implant" or process == "Background":
+        if (process == "Implant" or process == "Background") and enable_doping:
             ### Set doping layers
             # KNOWN ISSUE: If a metal or optical layer has the same name as a doping layer, Layer Builder will not compile
             # the process file correctly and the doping layer will not appear. Therefore, doping layer names MUST be unique.
