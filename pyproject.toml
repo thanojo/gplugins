@@ -24,7 +24,7 @@ license = {file = "LICENSE"}
 name = "gplugins"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.9.11"
+version = "0.9.13"
 
 [project.optional-dependencies]
 dagster = ["dagster", "dagit"]
@@ -50,15 +50,15 @@ devsim = [
 docs = [
   "jupytext",
   "matplotlib",
-  "jupyter-book==0.15.1",
+  "jupyter-book==1.0.0",
   "pyvista[jupyter]<=0.40"
 ]
 femwell = [
   "femwell>=0.1.6,<0.2",
-  "meshwell>=1.0.0,<1.1"
+  "meshwell>=1.0.7,<=1.1"
 ]
 gmsh = [
-  "gmsh==4.12.1",
+  "gmsh==4.12.2",
   "h5py",
   "mapbox_earcut",
   "meshio",
@@ -66,23 +66,20 @@ gmsh = [
   "pyvista<=0.40",
   "trimesh",
   "shapely",
-  "meshwell>=1.0.0,<1.1.0"
-]
-klayout = [
-  "kfactory[git,ipy]>=0.9.3,<0.11",
-  "pyvis<=0.3.1"
+  "meshwell>=1.0.7,<=1.1"
 ]
 meow = [
-  "jaxlib",
-  "jax",
+  "jax==0.4.23",
+  "jaxlib==0.4.23",
   "meow-sim>=0.9.0,<0.10.0",
   "tidy3d==2.5.2"
 ]
 sax = [
-  "jaxlib",
-  "jax",
+  "jax<=0.4.23",
+  "jaxlib<=0.4.23",
   "sax>=0.11.1,<0.12.0",
-  "scikit-learn"
+  "scikit-learn",
+  "pyvis<=0.3.1"
 ]
 schematic = [
   "bokeh",
@@ -91,7 +88,7 @@ schematic = [
 tidy3d = [
   "tidy3d==2.5.2",
   "meshio",
-  "meshwell>=1.0.0,<1.1"
+  "meshwell>=1.0.7,<=1.1"
 ]
 vlsir = [
   "vlsir>=4.0.0,<6.0.0",
@@ -192,7 +189,7 @@ message_template = "Bump to {new_version}"
 tag_template = "v{new_version}"
 
 [tool.tbump.version]
-current = "0.9.11"
+current = "0.9.13"
 regex = '''
   (?P<major>\d+)
   \.
