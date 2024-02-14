@@ -6,6 +6,7 @@ from gplugins.lumerical.config import ENABLE_DOPING
 from xml.etree.ElementTree import Element, SubElement
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
+import lumapi
 from pathlib import Path
 
 um = 1e-6
@@ -150,3 +151,30 @@ def layerstack_to_lbr(
         f.write(xml_str)
 
     return process_file_path
+
+
+def draw_geometry(
+    session: lumapi.MODE | lumapi.FDTD | lumapi.DEVICE,
+    gdspath: PathType,
+    process_file_path: PathType,
+) -> None:
+    """
+    Draw geometry in Lumerical simulator
+
+    Parameters:
+        session: Lumerical session
+        gdspath: GDS path
+        process_file_path: Process file path
+    """
+    s = session
+    s.addlayerbuilder()
+    s.set("x", 0)
+    s.set("y", 0)
+    s.set("z", 0)
+    s.loadgdsfile(str(gdspath))
+    try:
+        s.loadprocessfile(str(process_file_path))
+    except lumapi.LumApiError as err:
+        raise Exception(
+            f"{err}\nProcess file cannot be imported. Likely causes are dopants in the process file or syntax errors."
+        )

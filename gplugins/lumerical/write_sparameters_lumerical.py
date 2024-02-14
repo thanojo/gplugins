@@ -19,7 +19,7 @@ from gdsfactory.technology import LayerStack, LayerLevel
 from gplugins.common.utils.get_sparameters_path import (
     get_sparameters_path_lumerical as get_sparameters_path,
 )
-from gplugins.lumerical.utils import layerstack_to_lbr
+from gplugins.lumerical.utils import layerstack_to_lbr, draw_geometry
 
 if TYPE_CHECKING:
     from gdsfactory.typings import ComponentSpec, MaterialSpec, PathType
@@ -345,13 +345,10 @@ def write_sparameters_lumerical(
     )
 
     ### Create Layer Builder object and insert geometry
-    process_file_path = to_lbr(material_name_to_lumerical, layer_stack, dirpath)
-    s.addlayerbuilder()
-    s.set("x", 0)
-    s.set("y", 0)
-    s.set("z", 0)
-    s.loadgdsfile(str(gdspath))
-    s.loadprocessfile(str(process_file_path))
+    process_file_path = layerstack_to_lbr(
+        material_name_to_lumerical, layer_stack, dirpath
+    )
+    draw_geometry(s, gdspath, process_file_path)
 
     for i, port in enumerate(ports):
         zmin = layer_to_zmin[port.layer]
