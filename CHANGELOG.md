@@ -1,8 +1,32 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/gdsfactory/gplugins/compare/v0.9.10...main)
+## [Unreleased](https://github.com/gdsfactory/gplugins/compare/v0.9.13...main)
 
 <!-- towncrier release notes start -->
+
+## [0.9.13](https://github.com/gdsfactory/gplugins/releases/tag/v0.9.13) - 2024-02-07
+
+- pin older version of meshwell [#334](https://github.com/gdsfactory/gplugins/pull/334)
+- pin latest working version of jax and jaxlib for sax to work [#332](https://github.com/gdsfactory/gplugins/pull/332)
+
+
+## [0.9.12](https://github.com/gdsfactory/gplugins/releases/tag/v0.9.12) - 2024-02-07
+
+- background meshing [#319](https://github.com/gdsfactory/gplugins/pull/319)
+- Mesh smoothing [#320](https://github.com/gdsfactory/gplugins/pull/320)
+- Component with local layers [#318](https://github.com/gdsfactory/gplugins/pull/318)
+- Update component.py [#315](https://github.com/gdsfactory/gplugins/pull/315)
+- bump meow and sax [#308](https://github.com/gdsfactory/gplugins/pull/308)
+- also ignore layers without thickness or zmin in geometry_layers [#311](https://github.com/gdsfactory/gplugins/pull/311)
+- Switch to using a context manager for disable_print [#310](https://github.com/gdsfactory/gplugins/pull/310)
+- fix sax notebook [#307](https://github.com/gdsfactory/gplugins/pull/307)
+- Pyright remove unused expression [#304](https://github.com/gdsfactory/gplugins/pull/304)
+- Include tqdm in project dependencies [#295](https://github.com/gdsfactory/gplugins/pull/295)
+- require labels on PRs and remove stale [#329](https://github.com/gdsfactory/gplugins/pull/329)
+
+## [0.9.11](https://github.com/gdsfactory/gplugins/releases/tag/v0.9.11) - 2024-01-09
+
+- fix path_length_analysis [#293](https://github.com/gdsfactory/gplugins/pull/293)
 
 ## [0.9.10](https://github.com/gdsfactory/gplugins/releases/tag/v0.9.10) - 2024-01-07
 
