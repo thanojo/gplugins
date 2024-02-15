@@ -96,7 +96,7 @@ def layerstack_to_lbr(
             # the process file correctly and the doping layer will not appear. Therefore, doping layer names MUST be unique.
             # FIX: Appending "_doping" to name
 
-            # KNOWN ISSUE: If the 'process' is not 'Background' or 'Implant', this will crash CHARGE upon importing process file.
+            # KNOWN ISSUE: If the 'process' is not 'Background' or 'Implant' for dopants, this will crash CHARGE upon importing process file.
             # FIX: Ensure process is Background or Implant before proceeding to create entry
 
             # KNOWN ISSUE: Dopant must be either 'p' or 'n'. Anything else will cause CHARGE to crash upon importing process file.
