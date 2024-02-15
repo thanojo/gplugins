@@ -1,13 +1,15 @@
+import xml.etree.ElementTree as ET
+from pathlib import Path
+from xml.dom import minidom
+from xml.etree.ElementTree import Element, SubElement
+
+import lumapi
+from gdsfactory.config import logger
+from gdsfactory.pdk import get_layer_stack
 from gdsfactory.technology import LayerStack
 from gdsfactory.typings import PathType
-from gdsfactory.pdk import get_layer_stack
-from gdsfactory.config import logger
+
 from gplugins.lumerical.config import ENABLE_DOPING
-from xml.etree.ElementTree import Element, SubElement
-from xml.dom import minidom
-import xml.etree.ElementTree as ET
-import lumapi
-from pathlib import Path
 
 um = 1e-6
 
@@ -71,7 +73,6 @@ def layerstack_to_lbr(
                 "layer_name": f'{layer_info["layer"][0]}:{layer_info["layer"][1]}',
                 "start_position": f'{layer_info["zmin"] * um}',
                 "thickness": f'{layer_info["thickness"] * um}',
-                "start_position": f'{layer_info["zmin"] * um}',
                 "process": f"{process}",
                 "sidewall_angle": f'{90 - layer_info["sidewall_angle"]}',
                 "pattern_growth_delta": f"{layer_info['bias'] * um}"
@@ -177,4 +178,4 @@ def draw_geometry(
     except lumapi.LumApiError as err:
         raise Exception(
             f"{err}\nProcess file cannot be imported. Likely causes are dopants in the process file or syntax errors."
-        )
+        ) from err

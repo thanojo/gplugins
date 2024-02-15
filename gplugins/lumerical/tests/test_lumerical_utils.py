@@ -1,7 +1,8 @@
-from gplugins.lumerical.utils import layerstack_to_lbr
-from gdsfactory.technology.layer_stack import LayerStack, LayerLevel
 from gdsfactory.config import logger
+from gdsfactory.technology.layer_stack import LayerLevel, LayerStack
+
 from gplugins.lumerical.config import DEBUG_LUMERICAL, ENABLE_DOPING
+from gplugins.lumerical.utils import layerstack_to_lbr
 
 
 def test_layerstack_to_lbr():
@@ -210,9 +211,9 @@ def test_layerstack_to_lbr():
     try:
         import lumapi
     except Exception as err:
-        assert (
-            False
-        ), f"{err}\nUnable to import lumapi. Check sys.path for location to lumapi.py."
+        raise AssertionError(
+            f"{err}\nUnable to import lumapi. Check sys.path for location to lumapi.py."
+        ) from err
 
     message = ""
     sessions = [
@@ -254,7 +255,7 @@ def test_layerstack_to_lbr():
 
         # If process file cannot be imported into particular Lumerical simulator, raise error
         if not success:
-            assert False, f"Process file cannot be imported into {type(s)}"
+            raise AssertionError(f"Process file cannot be imported into {type(s)}")
 
     if success:
         message += (

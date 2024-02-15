@@ -14,12 +14,12 @@ from gdsfactory.generic_tech.simulation_settings import (
     SimulationSettingsLumericalFdtd,
 )
 from gdsfactory.pdk import get_layer_stack
-from gdsfactory.technology import LayerStack, LayerLevel
+from gdsfactory.technology import LayerStack
 
 from gplugins.common.utils.get_sparameters_path import (
     get_sparameters_path_lumerical as get_sparameters_path,
 )
-from gplugins.lumerical.utils import layerstack_to_lbr, draw_geometry
+from gplugins.lumerical.utils import draw_geometry, layerstack_to_lbr
 
 if TYPE_CHECKING:
     from gdsfactory.typings import ComponentSpec, MaterialSpec, PathType
@@ -203,7 +203,6 @@ def write_sparameters_lumerical(
 
     layer_to_thickness = layer_stack.get_layer_to_thickness()
     layer_to_zmin = layer_stack.get_layer_to_zmin()
-    layer_to_material = layer_stack.get_layer_to_material()
 
     if hasattr(component.info, "simulation_settings"):
         sim_settings |= component.info.simulation_settings
