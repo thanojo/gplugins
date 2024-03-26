@@ -174,7 +174,7 @@ def draw_geometry(
     s.loadgdsfile(str(gdspath))
     try:
         s.loadprocessfile(str(process_file_path))
-    except lumapi.LumApiError as err:
+    except Exception as err:
         raise Exception(
             f"{err}\nProcess file cannot be imported. Likely causes are dopants in the process file or syntax errors."
         ) from err
