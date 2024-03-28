@@ -3,7 +3,6 @@ from pathlib import Path
 from xml.dom import minidom
 from xml.etree.ElementTree import Element, SubElement
 
-import lumapi
 from gdsfactory.config import logger
 from gdsfactory.pdk import get_layer_stack
 from gdsfactory.technology import LayerStack
@@ -155,7 +154,7 @@ def layerstack_to_lbr(
 
 
 def draw_geometry(
-    session: lumapi.MODE | lumapi.FDTD | lumapi.DEVICE,
+    session: object,
     gdspath: PathType,
     process_file_path: PathType,
 ) -> None:
@@ -175,7 +174,7 @@ def draw_geometry(
     s.loadgdsfile(str(gdspath))
     try:
         s.loadprocessfile(str(process_file_path))
-    except lumapi.LumApiError as err:
+    except Exception as err:
         raise Exception(
             f"{err}\nProcess file cannot be imported. Likely causes are dopants in the process file or syntax errors."
         ) from err
