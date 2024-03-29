@@ -5,7 +5,6 @@ import threading
 import gplugins.design_recipe as dr
 
 
-# moved into a class in case we want to make this a parallel-dispatch dependency DAG instead of a serial array
 class ConstituentRecipes:
     """
     A class to represent a flow of DesignRecipes.

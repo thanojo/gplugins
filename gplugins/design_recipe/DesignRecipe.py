@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import json
+import os
+import pickle
 from collections.abc import Callable
 from pathlib import Path, PosixPath, WindowsPath
 
+import pydantic
 from gdsfactory import Component
+from gdsfactory.config import logger
 from gdsfactory.path import hashlib
 from gdsfactory.pdk import LayerStack, get_layer_stack
 from gdsfactory.typings import ComponentFactory
-from gdsfactory.config import logger
 from pydantic import BaseModel
 
 import gplugins.design_recipe as dr
-import os
-import pickle
-import pydantic
 
 
 class Setup:
@@ -47,18 +47,23 @@ class DesignRecipe:
 
 
     Attributes:
-        dependencies: This `DesignRecipe`s dependencies. These are assumed to be independent
-        last_hash: The hash of the system last time eval() was executed. This is used to determine whether the recipe's
-                    configuration has changed, meaning it must be re-eval'ed.
-        cell: GDSFactory layout cell or component. This is not necessarily the same `component` referred to in the
-                `dependencies` recipes.
+        dependencies: This `DesignRecipe`s dependencies, assumed to be independent
+        last_hash: The hash of the system last time eval() was executed.
+                   This is used to determine whether the recipe's configuration
+                   has changed, meaning it must be re-eval'ed.
+        cell: GDSFactory layout cell or component. This is not necessarily the
+              same `component` referred to in the `dependencies` recipes.
         layer_stack: PDK layerstack
         dirpath: Root directory where recipes runs are stored
-        recipe_dirpath: Recipe directory where recipe results are stored. This is only created upon eval of the recipe.
-        run_convergence: Run convergence if True. Accurate simulations come from simulations that have run convergence.
-        override_recipe: Overrides recipe results if True. This runs the design recipe regardless if results are
-                        available and overwrites recipe results.
-        recipe_results: A dynamic object used to store recipe results and the setup to these results
+        recipe_dirpath: Recipe directory where recipe results are stored.
+                        This is only created upon eval of the recipe.
+        run_convergence: Run convergence if True. Accurate simulations come from
+                         simulations that have run convergence.
+        override_recipe: Overrides recipe results if True. This runs the design
+                         recipe regardless if results are available and overwrites
+                         recipe results.
+        recipe_results: A dynamic object used to store recipe results and the
+                        setup to these results
     """
 
     dependencies: dr.ConstituentRecipes
@@ -88,8 +93,7 @@ class DesignRecipe:
             cell_hash = self.cell().hash_geometry()
         elif type(self.cell) == Component:
             cell_hash = self.cell.hash_geometry()
-        self.recipe_setup = Setup(cell_hash=cell_hash,
-                                  layer_stack=layer_stack)
+        self.recipe_setup = Setup(cell_hash=cell_hash, layer_stack=layer_stack)
         self.recipe_results = Results(prefix="recipe")
 
     def __hash__(self) -> int:
@@ -175,8 +179,8 @@ class DesignRecipe:
         - convergence_settings
         - simulation_settings
 
-        This is usually done after convergence testing is completed and simulation settings are accurate and should be
-        saved for future reference/recall.
+        This is usually done after convergence testing is completed and simulation
+        settings are accurate and should be saved for future reference/recall.
         """
         self.recipe_results.recipe_setup = self.recipe_setup
         self.recipe_dirpath.resolve().mkdir(parents=True, exist_ok=True)
@@ -184,8 +188,8 @@ class DesignRecipe:
 
     def is_same_recipe_results(self) -> bool:
         """
-        Returns whether recipe results' setup are the same as the current setup for the recipe.
-        This is important for preventing hash collisions.
+        Returns whether recipe results' setup are the same as the current setup
+        for the recipe. This is important for preventing hash collisions.
         """
         try:
             return self.recipe_results.recipe_setup == self.recipe_setup
@@ -206,7 +210,8 @@ def eval_decorator(func):
 
     def design_recipe_eval(*args, **kwargs):
         """
-        Evaluates design recipe and its dependencies then hashes the design recipe and returns successful execution
+        Evaluates design recipe and its dependencies then hashes the design recipe
+        and returns successful execution
         """
         self = args[0]
         # Evaluate independent dependent recipes
@@ -217,20 +222,27 @@ def eval_decorator(func):
         self.last_hash = self.__hash__()
 
         # Create directory for recipe results
-        self.recipe_dirpath = self.dirpath / f"{self.__class__.__name__}_{self.last_hash}"
+        self.recipe_dirpath = (
+            self.dirpath / f"{self.__class__.__name__}_{self.last_hash}"
+        )
         self.recipe_dirpath.mkdir(parents=True, exist_ok=True)
         self.recipe_results.dirpath = self.recipe_dirpath
         self.recipe_results.prefix = "recipe"
         logger.info(f"Hashed Directory: {self.recipe_dirpath}")
 
         # Add text file outlining dependencies for traceability
-        with open(str(self.recipe_dirpath.resolve() / "recipe_dependencies.txt"), "w") as f:
-            dependencies = [f"{recipe.__class__.__name__}_{recipe.last_hash}" for recipe in self.dependencies]
+        with open(
+            str(self.recipe_dirpath.resolve() / "recipe_dependencies.txt"), "w"
+        ) as f:
+            dependencies = [
+                f"{recipe.__class__.__name__}_{recipe.last_hash}"
+                for recipe in self.dependencies
+            ]
             dependencies = "\n".join(dependencies)
             f.write(dependencies)
 
-
-        # Check if results already available. Results must be stored in directory with the same hash.
+        # Check if results already available
+        # Results must be stored in directory with the same hash.
         if (
             self.recipe_results.available()
             and not self.override_recipe
@@ -240,11 +252,13 @@ def eval_decorator(func):
             self.load_recipe_results()
 
             if not self.is_same_recipe_results():
-                # If the recipe setup is not the same as in the results, eval the design recipe
+                # If the recipe setup is not the same as in the results,
+                # eval the design recipe
                 success = success and func(*args, **kwargs)
                 self.save_recipe_results()
         else:
-            # If results not available, recipe config has changed, or user wants to override recipe results,
+            # If results not available, recipe config has changed,
+            # or user wants to override recipe results,
             # eval the design recipe
             success = success and func(*args, **kwargs)
             self.save_recipe_results()
@@ -259,8 +273,8 @@ class Results:
     """
     Results are stored in this dynamic class. Any type of results can be stored.
 
-    This class allows designers to arbitrarily add results. Results are pickled to be saved onto working system.
-    Results can be retrieved via unpickling.
+    This class allows designers to arbitrarily add results. Results are pickled
+    to be saved onto working system. Results can be retrieved via unpickling.
     """
 
     def __init__(self, prefix: str = "", dirpath: Path | None = None, **kwargs):
@@ -279,9 +293,13 @@ class Results:
             dirpath: Directory to store pickle file
         """
         if dirpath is None:
-            with open(str(self.dirpath.resolve() / f"{self.prefix}_results.pkl"), "wb") as f:
+            with open(
+                str(self.dirpath.resolve() / f"{self.prefix}_results.pkl"), "wb"
+            ) as f:
                 pickle.dump(self, f)
-                logger.info(f"Cached results to {self.dirpath} -> {self.prefix}_results.pkl")
+                logger.info(
+                    f"Cached results to {self.dirpath} -> {self.prefix}_results.pkl"
+                )
         else:
             with open(str(dirpath.resolve() / f"{self.prefix}_results.pkl"), "wb") as f:
                 pickle.dump(self, f)
@@ -300,19 +318,25 @@ class Results:
         if isinstance(dirpath, str):
             dirpath = Path(dirpath)
         if dirpath is None:
-            with open(str(self.dirpath.resolve() / f"{self.prefix}_results.pkl"), "rb") as f:
+            with open(
+                str(self.dirpath.resolve() / f"{self.prefix}_results.pkl"), "rb"
+            ) as f:
                 unpickler = PathUnpickler(f)
                 results = unpickler.load()
                 if not results.dirpath == self.dirpath:
                     results.dirpath = self.dirpath
-                logger.info(f"Recalled results from {self.dirpath} -> {self.prefix}_results.pkl")
+                logger.info(
+                    f"Recalled results from {self.dirpath} -> {self.prefix}_results.pkl"
+                )
         else:
             with open(str(dirpath.resolve() / f"{self.prefix}_results.pkl"), "rb") as f:
                 unpickler = PathUnpickler(f)
                 results = unpickler.load()
                 if not results.dirpath == dirpath:
                     results.dirpath = dirpath
-                logger.info(f"Recalled results from {dirpath} -> {self.prefix}_results.pkl")
+                logger.info(
+                    f"Recalled results from {dirpath} -> {self.prefix}_results.pkl"
+                )
 
         return results
 
@@ -339,7 +363,8 @@ class Simulation:
     """
     Represents the simulation object used to simulate GDSFactory devices.
 
-    This simulation object's purpose is to reduce time simulating by recalling hashed results.
+    This simulation object's purpose is to reduce time simulating by recalling
+    hashed results.
     """
 
     # the hash of the system last time convergence was executed
@@ -414,15 +439,16 @@ class Simulation:
 
     def save_convergence_results(self):
         """
-        Saves convergence_results to pickle file while adding setup information and resultant accurate simulation settings.
+        Saves convergence_results to pickle file while adding setup information
+        and resultant accurate simulation settings.
         This includes:
         - component hash
         - layerstack
         - convergence_settings
         - simulation_settings
 
-        This is usually done after convergence testing is completed and simulation settings are accurate and should be
-        saved for future reference/recall.
+        This is usually done after convergence testing is completed and simulation
+        settings are accurate and should be saved for future reference/recall.
         """
         self.convergence_results.convergence_settings = self.convergence_settings
         self.convergence_results.simulation_settings = self.simulation_settings
@@ -433,8 +459,8 @@ class Simulation:
 
     def is_same_convergence_results(self) -> bool:
         """
-        Returns whether convergence results' setup are the same as the current setup for the simulation.
-        This is important for preventing hash collisions.
+        Returns whether convergence results' setup are the same as the current
+        setup for the simulation. This is important for preventing hash collisions.
         """
         try:
             return (
@@ -452,7 +478,8 @@ class PathUnpickler(pickle.Unpickler):
     """
     Unpickles objects while handling OS-dependent paths
     """
+
     def find_class(self, module, name):
-        if module == 'pathlib' and (name == 'PosixPath' or name == "WindowsPath"):
-            return WindowsPath if os.name == 'nt' else PosixPath
+        if module == "pathlib" and (name == "PosixPath" or name == "WindowsPath"):
+            return WindowsPath if os.name == "nt" else PosixPath
         return super().find_class(module, name)

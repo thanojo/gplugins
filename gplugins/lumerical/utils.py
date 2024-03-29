@@ -3,7 +3,6 @@ from pathlib import Path
 from xml.dom import minidom
 from xml.etree.ElementTree import Element, SubElement
 
-
 from gdsfactory.config import logger
 from gdsfactory.pdk import get_layer_stack
 from gdsfactory.technology import LayerStack
@@ -19,23 +18,29 @@ def layerstack_to_lbr(
     use_pdk_material_names: bool = False,
 ) -> Path:
     """
-    Generate an XML file representing a Lumerical Layer Builder process file based on provided material map.
+    Generate an XML file representing a Lumerical Layer Builder process file
+    based on provided material map.
 
     Args:
-        material_map: A dictionary mapping materials used in the layer stack to Lumerical materials.
-        layerstack: Layer stack that has info on layer names, layer numbers, thicknesses, etc.
+        material_map: A dictionary mapping materials used in the layer stack to
+            Lumerical materials.
+        layerstack: Layer stack that has info on layer names, layer numbers,
+            thicknesses, etc.
         dirpath: Directory to save process file (process.lbr)
-        use_pdk_material_names: Use PDK material names in the pattern material and background material fields.
-                                This is mainly used for DEVICE simulations where several materials are grouped together
-                                in one material to describe electrical, thermal, and optical properties.
+        use_pdk_material_names: Use PDK material names in the pattern material and
+            background material fields. This is mainly used for DEVICE simulations
+            where several materials are grouped together in one material to describe
+            electrical, thermal, and optical properties.
 
     Returns:
         Process file path
 
     Notes:
-        This function generates an XML file representing a Layer Builder file for Lumerical, based on the provided the active PDK
-        and material map. It creates 'process.lbr' in the current working directory, containing layer information like name,
-        material, thickness, sidewall angle, and other properties specified in the layer stack.
+        This function generates an XML file representing a Layer Builder file for
+        Lumerical, based on the provided the active PDK and material map. It creates
+        'process.lbr' in the current working directory, containing layer information
+        like name, material, thickness, sidewall angle, and other properties specified
+        in the layer stack.
     """
     layerstack = layerstack or get_layer_stack()
 
@@ -105,14 +110,17 @@ def layerstack_to_lbr(
 
         if (process == "Implant" or process == "Background") and ENABLE_DOPING:
             ### Set doping layers
-            # KNOWN ISSUE: If a metal or optical layer has the same name as a doping layer, Layer Builder will not compile
-            # the process file correctly and the doping layer will not appear. Therefore, doping layer names MUST be unique.
+            # KNOWN ISSUE: If a metal or optical layer has the same name as a doping layer,
+            # Layer Builder will not compile the process file correctly and the
+            # doping layer will not appear. Therefore, doping layer names MUST be unique.
             # FIX: Appending "_doping" to name
 
-            # KNOWN ISSUE: If the 'process' is not 'Background' or 'Implant' for dopants, this will crash CHARGE upon importing process file.
+            # KNOWN ISSUE: If the 'process' is not 'Background' or 'Implant' for dopants,
+            # this will crash CHARGE upon importing process file.
             # FIX: Ensure process is Background or Implant before proceeding to create entry
 
-            # KNOWN ISSUE: Dopant must be either 'p' or 'n'. Anything else will cause CHARGE to crash upon importing process file.
+            # KNOWN ISSUE: Dopant must be either 'p' or 'n'. Anything else will
+            # cause CHARGE to crash upon importing process file.
             # FIX: Raise ValueErrorr when dopant is specified incorrectly
             if layer_info.get(
                 "background_doping_concentration", False
@@ -191,4 +199,3 @@ def draw_geometry(
         raise Exception(
             f"{err}\nProcess file cannot be imported. Likely causes are dopants in the process file or syntax errors."
         ) from err
-
