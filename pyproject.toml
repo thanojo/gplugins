@@ -137,6 +137,7 @@ norecursedirs = [
   "extra/*.py",
   'gplugins/dagster',
   'gplugins/devsim',
+  'gplugins/lumerical',
   'gplugins/sax/integrations',
   'gplugins/tidy3d/tests/tests_sparameters',
   'gplugins/fdtdz',
