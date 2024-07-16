@@ -1,23 +1,27 @@
+import os
+import hashlib
+import pickle
 import xml.etree.ElementTree as ET
-from pathlib import Path
+from pathlib import Path, PosixPath, WindowsPath
 from xml.dom import minidom
 from xml.etree.ElementTree import Element, SubElement
 
+import pydantic
+from gdsfactory.component import Component
 from gdsfactory.config import logger
 from gdsfactory.pdk import get_layer_stack
 from gdsfactory.technology import LayerStack
 from gdsfactory.typings import PathType
 
-from gplugins.lumerical.config import ENABLE_DOPING
-
-um = 1e-6
+from gplugins.lumerical.config import ENABLE_DOPING, um
 
 
 def layerstack_to_lbr(
     material_map: dict[str, str],
     layerstack: LayerStack | None = None,
     dirpath: PathType | None = "",
-) -> None:
+    use_pdk_material_names: bool = False,
+) -> Path:
     """
     Generate an XML file representing a Lumerical Layer Builder process file based on provided material map.
 
@@ -25,6 +29,9 @@ def layerstack_to_lbr(
         material_map: A dictionary mapping materials used in the layer stack to Lumerical materials.
         layerstack: Layer stack that has info on layer names, layer numbers, thicknesses, etc.
         dirpath: Directory to save process file (process.lbr)
+        use_pdk_material_names: Use PDK material names in the pattern material and background material fields.
+                                This is mainly used for DEVICE simulations where several materials are grouped together
+                                in one material to describe electrical, thermal, and optical properties.
 
     Returns:
         Process file path
@@ -39,7 +46,7 @@ def layerstack_to_lbr(
     layer_builder = Element("layer_builder")
 
     process_name = SubElement(layer_builder, "process_name")
-    process_name.text = "process"
+    process_name.text = ""
 
     layers = SubElement(layer_builder, "layers")
     doping_layers = SubElement(layer_builder, "doping_layers")
@@ -48,7 +55,10 @@ def layerstack_to_lbr(
             process = "Grow"
         elif layer_info["layer_type"] == "background":
             process = "Background"
-        elif layer_info["layer_type"] == "doping":
+        elif (
+            layer_info["layer_type"] == "doping"
+            or layer_info["layer_type"] == "implant"
+        ):
             process = "Implant"
         else:
             logger.warning(
@@ -85,10 +95,17 @@ def layerstack_to_lbr(
             if process == "Grow":
                 layer.set(
                     "pattern_material",
-                    f'{material_map.get(layer_info["material"], "")}',
+                    f'{material_map.get(layer_info["material"], "")}'
+                    if not use_pdk_material_names
+                    else layer_info["material"],
                 )
             elif process == "Background":
-                layer.set("material", f'{material_map.get(layer_info["material"], "")}')
+                layer.set(
+                    "material",
+                    f'{material_map.get(layer_info["material"], "")}'
+                    if not use_pdk_material_names
+                    else layer_info["material"],
+                )
 
         if (process == "Implant" or process == "Background") and ENABLE_DOPING:
             ### Set doping layers
@@ -110,13 +127,13 @@ def layerstack_to_lbr(
                     "distribution_function": "Gaussian",
                     "phi": "0",
                     "lateral_scatter": "2e-08",
-                    "range": f"{layer_info['thickness'] * um}",
+                    "range": f"{layer_info['thickness'] / 2 * um}",
                     "theta": "0",
                     "mask_layer_number": f'{layer_info["layer"][0]}:{layer_info["layer"][1]}',
                     "kurtosis": "0",
                     "process": f"{process}",
                     "skewness": "0",
-                    "straggle": "4.9999999999999998e-08",
+                    "straggle": f"{layer_info['thickness'] * um}",
                     "concentration": f"{layer_info['background_doping_concentration']}",
                     "enabled": "1",
                     "name": f"{layer_name}_doping",
@@ -139,12 +156,12 @@ def layerstack_to_lbr(
         layer_builder.remove(doping_layers)
 
     # Prettify XML
-    rough_string = ET.tostring(layer_builder, "utf-8")
+    rough_string = ET.tostring(layer_builder, "utf-8", short_empty_elements=False)
     reparsed = minidom.parseString(rough_string)
     xml_str = reparsed.toprettyxml(indent="  ")
 
     if dirpath:
-        process_file_path = Path(str(dirpath)) / "process.lbr"
+        process_file_path = Path(str(dirpath.resolve())) / "process.lbr"
     else:
         process_file_path = Path(__file__).resolve().parent / "process.lbr"
     with open(str(process_file_path), "w") as f:
@@ -178,5 +195,206 @@ def draw_geometry(
         raise Exception(
             f"{err}\nProcess file cannot be imported. Likely causes are dopants in the process file or syntax errors."
         ) from err
-        
-        
+
+
+class Results:
+    """
+    Results are stored in this dynamic class. Any type of results can be stored.
+
+    This class allows designers to arbitrarily add results. Results are pickled to be saved onto working system.
+    Results can be retrieved via unpickling.
+    """
+
+    def __init__(self, prefix: str = "", dirpath: Path | None = None, **kwargs):
+        if isinstance(dirpath, str):
+            dirpath = Path(dirpath)
+        self.dirpath = dirpath or Path(".")
+        self.prefix = prefix
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def save_pickle(self, dirpath: Path | None = None):
+        """
+        Save results by pickling as *_results.pkl file
+
+        Parameters:
+            dirpath: Directory to store pickle file
+        """
+        if dirpath is None:
+            with open(str(self.dirpath.resolve() / f"{self.prefix}_results.pkl"), "wb") as f:
+                pickle.dump(self, f)
+                logger.info(f"Cached results to {self.dirpath} -> {self.prefix}_results.pkl")
+        else:
+            with open(str(dirpath.resolve() / f"{self.prefix}_results.pkl"), "wb") as f:
+                pickle.dump(self, f)
+                logger.info(f"Cached results to {dirpath} -> {self.prefix}_results.pkl")
+
+    def get_pickle(self, dirpath: Path | None = None) -> object:
+        """
+        Get results from *_results.pkl file
+
+        Parameters:
+            dirpath: Directory to get pickle file
+
+        Returns:
+            Results as an object with results
+        """
+        if isinstance(dirpath, str):
+            dirpath = Path(dirpath)
+        if dirpath is None:
+            with open(str(self.dirpath.resolve() / f"{self.prefix}_results.pkl"), "rb") as f:
+                unpickler = PathUnpickler(f)
+                results = unpickler.load()
+                if not results.dirpath == self.dirpath:
+                    results.dirpath = self.dirpath
+                logger.info(f"Recalled results from {self.dirpath} -> {self.prefix}_results.pkl")
+        else:
+            with open(str(dirpath.resolve() / f"{self.prefix}_results.pkl"), "rb") as f:
+                unpickler = PathUnpickler(f)
+                results = unpickler.load()
+                if not results.dirpath == dirpath:
+                    results.dirpath = dirpath
+                logger.info(f"Recalled results from {dirpath} -> {self.prefix}_results.pkl")
+
+        return results
+
+    def available(self, dirpath: Path | None = None) -> bool:
+        """
+        Check if '*_results.pkl' file exists and results can be loaded
+
+        Parameters:
+            dirpath: Directory with pickle file
+
+        Returns:
+            True if results exist, False otherwise.
+        """
+        if isinstance(dirpath, str):
+            dirpath = Path(dirpath)
+        if dirpath is None:
+            results_file = self.dirpath.resolve() / f"{self.prefix}_results.pkl"
+        else:
+            results_file = dirpath.resolve() / f"{self.prefix}_results.pkl"
+        return results_file.is_file()
+
+
+class Simulation:
+    """
+    Represents the simulation object used to simulate GDSFactory devices.
+
+    This simulation object's primary purpose is to reduce time simulating by recalling hashed results.
+    """
+
+    # the hash of the system last time convergence was executed
+    last_hash: int = -1
+
+    # A dynamic object used to store convergence results
+    convergence_results: Results
+
+    def __init__(
+        self,
+        component: Component,
+        layerstack: LayerStack | None = None,
+        simulation_settings: pydantic.BaseModel | None = None,
+        convergence_settings: pydantic.BaseModel | None = None,
+        dirpath: Path | None = None,
+    ):
+        self.dirpath = dirpath or Path(".")
+        self.component = component
+        self.layerstack = layerstack or get_layer_stack()
+        self.simulation_settings = simulation_settings
+        self.convergence_settings = convergence_settings
+
+        self.last_hash = hash(self)
+
+        # Create directory for simulation files
+        self.simulation_dirpath = (
+            self.dirpath / f"{self.__class__.__name__}_{self.last_hash}"
+        )
+        self.simulation_dirpath.mkdir(parents=True, exist_ok=True)
+
+        # Create attribute for convergence results
+        self.convergence_results = Results(
+            prefix="convergence", dirpath=self.simulation_dirpath
+        )
+
+    def __hash__(self) -> int:
+        """
+        Returns a hash of all state this Simulation contains
+        Subclasses should include functionality-specific state (e.g. convergence info) here.
+        This is used to determine simulation convergence (i.e. if it needs to be rerun)
+
+        Hashed items:
+        - component
+        - layer stack
+        - simulation settings
+        - convergence settings
+        """
+        h = hashlib.sha1()
+        if self.component is not None:
+            h.update(self.component.hash_geometry(precision=1e-4).encode("utf-8"))
+        if self.layerstack is not None:
+            h.update(self.layerstack.model_dump_json().encode("utf-8"))
+        if self.simulation_settings is not None:
+            h.update(self.simulation_settings.model_dump_json().encode("utf-8"))
+        if self.convergence_settings is not None:
+            h.update(self.convergence_settings.model_dump_json().encode("utf-8"))
+        return int.from_bytes(h.digest(), "big")
+
+    def convergence_is_fresh(self) -> bool:
+        """
+        Returns if this simulation needs to be re-run.
+        This could be caused by this simulation's
+        configuration being changed.
+        """
+        return hash(self) == self.last_hash
+
+    def load_convergence_results(self):
+        """
+        Loads convergence results from pickle file into class attribute
+        """
+        self.convergence_results = self.convergence_results.get_pickle()
+
+    def save_convergence_results(self):
+        """
+        Saves convergence_results to pickle file while adding setup information and resultant accurate simulation settings.
+        This includes:
+        - component hash
+        - layerstack
+        - convergence_settings
+        - simulation_settings
+
+        This is usually done after convergence testing is completed and simulation settings are accurate and should be
+        saved for future reference/recall.
+        """
+        self.convergence_results.convergence_settings = self.convergence_settings
+        self.convergence_results.simulation_settings = self.simulation_settings
+        self.convergence_results.component_hash = self.component.hash_geometry()
+        self.convergence_results.layerstack = self.layerstack
+        self.simulation_dirpath.mkdir(parents=True, exist_ok=True)
+        self.convergence_results.save_pickle()
+
+    def is_same_convergence_results(self) -> bool:
+        """
+        Returns whether convergence results' setup are the same as the current setup for the simulation.
+        This is important for preventing hash collisions.
+        """
+        try:
+            return (
+                self.convergence_results.convergence_settings
+                == self.convergence_settings
+                and self.convergence_results.component_hash
+                == self.component.hash_geometry()
+                and self.convergence_results.layerstack == self.layerstack
+            )
+        except AttributeError:
+            return False
+
+
+class PathUnpickler(pickle.Unpickler):
+    """
+    Unpickles objects while handling OS-dependent paths
+    """
+    def find_class(self, module, name):
+        if module == 'pathlib' and (name == 'PosixPath' or name == "WindowsPath"):
+            return WindowsPath if os.name == 'nt' else PosixPath
+        return super().find_class(module, name)

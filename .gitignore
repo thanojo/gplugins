@@ -20,11 +20,8 @@ gplugins/klayout/tech.lyt
 *.fsp
 *.hdf5
 *.msh
-*.dat
 *.gds
-*.pkl
-*.txt
-*.csv
+*.html
 test-data/
 _autosummary/
 gplugins/path_length_analysis/test_pathlength_reporting/

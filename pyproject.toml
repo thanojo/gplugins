@@ -50,7 +50,8 @@ dev = [
   "hyperopt",
   "tbump",
   "towncrier",
-  "ray"
+  "ray",
+  "PyQt5"
 ]
 devsim = [
   "devsim",
