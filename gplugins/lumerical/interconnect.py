@@ -5,8 +5,8 @@ import pathlib
 from collections import OrderedDict
 
 import numpy as np
-from gdsfactory import Component
-from gdsfactory.config import PATH, logger
+from gdsfactory import Component, logger
+from gdsfactory.config import PATH
 from omegaconf import DictConfig
 
 from pathlib import Path

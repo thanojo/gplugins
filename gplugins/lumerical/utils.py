@@ -8,7 +8,7 @@ from xml.etree.ElementTree import Element, SubElement
 
 import pydantic
 from gdsfactory.component import Component
-from gdsfactory.config import logger
+from gdsfactory import logger
 from gdsfactory.pdk import get_layer_stack
 from gdsfactory.technology import LayerStack
 from gdsfactory.typings import PathType
@@ -51,18 +51,19 @@ def layerstack_to_lbr(
     layers = SubElement(layer_builder, "layers")
     doping_layers = SubElement(layer_builder, "doping_layers")
     for layer_name, layer_info in layerstack.to_dict().items():
-        if layer_info["layer_type"] == "grow":
+        level_info = layer_info["info"]
+        if level_info["layer_type"] == "grow":
             process = "Grow"
-        elif layer_info["layer_type"] == "background":
+        elif level_info["layer_type"] == "background":
             process = "Background"
         elif (
-            layer_info["layer_type"] == "doping"
+            level_info["layer_type"] == "doping"
             or layer_info["layer_type"] == "implant"
         ):
             process = "Implant"
         else:
             logger.warning(
-                f'"{layer_info["layer_type"]}" layer type not supported for "{layer_name}" in Lumerical. Skipping in LBR process file generation.'
+                f'"{level_info["layer_type"]}" layer type not supported for "{layer_name}" in Lumerical. Skipping in LBR process file generation.'
             )
             process = "Grow"
 

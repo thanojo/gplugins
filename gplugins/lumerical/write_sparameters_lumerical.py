@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING
 import gdsfactory as gf
 import numpy as np
 import yaml
-from gdsfactory.config import __version__, logger
+from gdsfactory.config import __version__
+from gdsfactory import logger
 from gdsfactory.pdk import get_layer_stack
 from gdsfactory.technology import LayerStack
 
