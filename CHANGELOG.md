@@ -1,8 +1,21 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/gdsfactory/gplugins/compare/v1.1.0...main)
+## [Unreleased](https://github.com/gdsfactory/gplugins/compare/v1.1.2...main)
 
 <!-- towncrier release notes start -->
+
+## [1.1.2](https://github.com/gdsfactory/gplugins/releases/tag/v1.1.2) - 2024-08-15
+
+- Support instances in path-length extraction from gds [#468](https://github.com/gdsfactory/gplugins/pull/468)
+- update pins [#466](https://github.com/gdsfactory/gplugins/pull/466)
+
+
+## [1.1.1](https://github.com/gdsfactory/gplugins/releases/tag/v1.1.1) - 2024-08-13
+
+- Improvements to path length code [#461](https://github.com/gdsfactory/gplugins/pull/461)
+- pin vlsir [#464](https://github.com/gdsfactory/gplugins/pull/464)
+- rename validate call [#462](https://github.com/gdsfactory/gplugins/pull/462)
+
 
 ## [1.1.0](https://github.com/gdsfactory/gplugins/releases/tag/v1.1.0) - 2024-08-05
 
